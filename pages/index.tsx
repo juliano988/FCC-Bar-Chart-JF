@@ -1,29 +1,44 @@
 import Head from 'next/head'
 import styles from '../styles/App.module.css'
 import * as d3 from "d3";
-import { useEffect, useRef } from 'react';
+import { DetailedHTMLProps, HTMLAttributes, LegacyRef, MutableRefObject, RefObject, useEffect, useRef } from 'react';
 
 export default function App({ data }): JSX.Element {
 
-  const svgRef = useRef(null)
+  return (
+    <div className={styles.container}>
+      <Head>
+        <title>FCC - Bar Chart</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <h1 id='title'>United States GDP</h1>
+        <Graphic data={data} height='80vh' width='80vw' />
+    </div>
+  )
+}
+
+function Graphic(props:{data:any , height:string , width:string}) {
+  
+  const divRef = useRef<HTMLEmbedElement>(null);
 
   useEffect(function () {
 
-    const svgHeight = window.innerHeight * 0.75;
-    const svgWidth = window.innerWidth * 0.75;
+    const svgHeight = divRef.current.clientHeight;
+    const svgWidth = divRef.current.clientWidth;
 
     const rectBaseWidth = 5;
-    const spaceBetweenRect = 1
+    const spaceBetweenRect = 1;
 
-    const scaleX = d3.scaleLinear().domain([0, data.data.length * rectBaseWidth + data.data.length * spaceBetweenRect]).range([0, svgWidth])
-    const scaleY = d3.scaleLinear().domain([0, Math.max(...data.data.map(function (val) { return val[1] }))]).range([0, svgHeight])
+    const scaleX = d3.scaleLinear().domain([0, props.data.data.length * rectBaseWidth + props.data.data.length * spaceBetweenRect]).range([0, svgWidth]);
+    const scaleY = d3.scaleLinear().domain([0, Math.max(...props.data.data.map(function (val) { return val[1] }))]).range([0, svgHeight]);
 
-    const svg = d3.select(svgRef.current)
+    const svg = d3.select(divRef.current)
+      .append('svg')
       .attr('width', svgWidth)
       .attr('height', svgHeight)
 
     svg.selectAll('rect')
-      .data(data.data)
+      .data(props.data.data)
       .enter().append('rect')
       .attr('width', scaleX(rectBaseWidth))
       .attr('height', (d) => scaleY(d[1]))
@@ -33,15 +48,8 @@ export default function App({ data }): JSX.Element {
   }, [])
 
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>FCC - Bar Chart</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <h1 id='title'>United States GDP</h1>
-      <svg ref={svgRef}>
+    <div ref={divRef} style={{height: props.height , width: props.width , margin:'auto'}}>
 
-      </svg>
     </div>
   )
 }
