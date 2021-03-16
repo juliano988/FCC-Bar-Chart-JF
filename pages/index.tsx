@@ -3,6 +3,7 @@ import styles from '../styles/App.module.css'
 import * as d3 from "d3";
 import * as axis from "d3-axis";
 import { DetailedHTMLProps, HTMLAttributes, LegacyRef, MutableRefObject, RefObject, useEffect, useRef } from 'react';
+import { Interface } from 'node:readline';
 
 export default function App({ data }): JSX.Element {
 
@@ -18,17 +19,20 @@ export default function App({ data }): JSX.Element {
   )
 }
 
-function Graphic(props:{data:any , height:string , width:string}) {
+function Graphic(props:{data:{data:Array<[date:string,value:number]>}, height:string , width:string}) {
   
   const divRef = useRef<HTMLEmbedElement>(null);
 
   useEffect(function () {
+
+    console.log(props.data)
 
     const svgHeight = divRef.current.clientHeight;
     const svgWidth = divRef.current.clientWidth;
 
     const rectBaseWidth = 5;
     const spaceBetweenRect = 1;
+    const offset = 25;
 
     const maxY = Math.max(...props.data.data.map(function(val){return val[1]}))
     const minY = Math.min(...props.data.data.map(function(val){return val[1]}))
@@ -40,8 +44,9 @@ function Graphic(props:{data:any , height:string , width:string}) {
 
     const svg = d3.select(divRef.current)
       .append('svg')
-      .attr('width', svgWidth + 20)
-      .attr('height', svgHeight + 20)
+      .attr('width', svgWidth + offset * 2)
+      .attr('height', svgHeight + offset * 2)
+      .attr('transform','translate('+-offset+',0)')
 
     svg.selectAll('rect')
       .data(props.data.data)
@@ -49,18 +54,30 @@ function Graphic(props:{data:any , height:string , width:string}) {
       .attr('width', scaleX(rectBaseWidth))
       .attr('height', (d) => scaleY(d[1]))
       .style('fill', 'blue')
-      .attr('x', (d, i) => i * scaleX(rectBaseWidth + spaceBetweenRect))
-      .attr('y', (d) => svgHeight - scaleY(d[1]))
+      .attr('x', (d, i) => i * scaleX(rectBaseWidth + spaceBetweenRect) + offset)
+      .attr('y', (d) => svgHeight - scaleY(d[1]) + offset)
 
-    svg.append("g")
-       .attr("transform", "translate(0,"+svgHeight+")")
-       .call(d3.axisBottom(d3.scaleTime().domain([minX,maxX]).range([0,svgWidth])));
+    const bottomAxis =  svg.append('g')
+       .attr('transform', 'translate('+offset+','+(svgHeight + offset)+')')
+       .call(d3.axisBottom(d3.scaleTime().domain([minX,maxX]).range([0,svgWidth])))
+       .style('font-size','1rem')
+
+    const rightAxis = svg.append('g')
+       .attr('transform','translate('+(svgWidth + offset)+','+offset+')')
+       .call(d3.axisRight(d3.scaleLinear().domain([maxY,minY]).range([0,svgHeight])).tickSize(-svgWidth).tickPadding(-svgWidth))
+
+    rightAxis.selectAll('line')
+             .attr('stroke-dasharray','2,2')
+      
+    rightAxis.selectAll('text')
+             .attr('y','-10')
+             .style('font-size','1rem')
 
   }, [])
 
   return (
     <div ref={divRef} style={{height: props.height , width: props.width , margin:'auto'}}>
-
+      <path  ></path>
     </div>
   )
 }
