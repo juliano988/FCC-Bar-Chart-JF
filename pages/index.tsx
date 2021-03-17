@@ -16,7 +16,7 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <h5>More Information: <a href='http://www.bea.gov/national/pdf/nipaguid.pdf' style={{color:'#3967ff'}}>http://www.bea.gov/national/pdf/nipaguid.pdf</a></h5>
+      <h5 style={{margin: '0px'}}>More Information: <a href='http://www.bea.gov/national/pdf/nipaguid.pdf' style={{color:'#3967ff'}}>http://www.bea.gov/national/pdf/nipaguid.pdf</a></h5>
       <Graphic data={data.data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='60vh' width='75vw' />
     </div>
   )
