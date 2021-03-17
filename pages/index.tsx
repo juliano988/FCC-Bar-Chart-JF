@@ -4,6 +4,7 @@ import * as d3 from "d3";
 import { useEffect, useRef } from 'react';
 import tippy, { followCursor } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
+import { GraphicProps } from './customTypes';
 
 
 export default function App({ data }): JSX.Element {
@@ -15,12 +16,12 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <Graphic data={data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='70vh' width='75vw' />
+      <Graphic data={data.data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='70vh' width='75vw' />
     </div>
   )
 }
 
-function Graphic(props: { data: { data: Array<[date: string, value: number]> } , xLabel:string , yLabel:string , height: string, width: string }): JSX.Element {
+function Graphic(props:GraphicProps): JSX.Element {
 
   const divRef = useRef<HTMLEmbedElement>(null);
 
@@ -33,22 +34,22 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> } ,
     const spaceBetweenRect = 1;
     const offset = 50;
 
-    const maxY = Math.max(...props.data.data.map(function (val) { return val[1] }))
-    const minY = Math.min(...props.data.data.map(function (val) { return val[1] }))
-    const maxX = new Date(props.data.data[props.data.data.length - 1][0])
-    const minX = new Date(props.data.data[0][0])
+    const maxY = Math.max(...props.data.map(function (val) { return val[1] }))
+    const minY = Math.min(...props.data.map(function (val) { return val[1] }))
+    const maxX = new Date(props.data[props.data.length - 1][0])
+    const minX = new Date(props.data[0][0])
 
-    const scaleX = d3.scaleLinear().domain([0, props.data.data.length * rectBaseWidth + props.data.data.length * spaceBetweenRect]).range([0, svgWidth]);
+    const scaleX = d3.scaleLinear().domain([0, props.data.length * rectBaseWidth + props.data.length * spaceBetweenRect]).range([0, svgWidth]);
     const scaleY = d3.scaleLinear().domain([0, maxY]).range([0, svgHeight]);
 
     const svg = d3.select(divRef.current)
       .append('svg')
       .attr('width', svgWidth + offset * 2)
       .attr('height', svgHeight + offset * 2)
-      .attr('transform', 'translate(' + -offset + ',' + -offset + ')')
+      .attr('transform', 'translate(' + (-offset) + ',' + (-offset) + ')')
 
     svg.selectAll('rect')
-      .data(props.data.data)
+      .data(props.data)
       .enter().append('rect')
       .attr('class', styles.rectClass)
       .attr('width', scaleX(rectBaseWidth))
@@ -65,7 +66,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> } ,
     const yLabel = svg.append('text')
       .attr('fill','white')
       .text(props.yLabel)
-    yLabel.attr('transform', 'translate(' + offset/2 + ',' + (svgHeight/2 + yLabel.text().length * 5) + ') rotate(-90)');
+    yLabel.attr('transform', 'translate(' + offset/2 + ',' + (svgHeight/2 + offset + yLabel.text().length * 3) + ') rotate(-90)');
 
     const rightAxis = svg.append('g')
       .attr('transform', 'translate(' + (svgWidth + offset) + ',' + offset + ')')
@@ -84,7 +85,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> } ,
     const xLabel = svg.append('text')
       .attr('fill','white')
       .text(props.xLabel)
-    xLabel.attr('transform', 'translate('+(svgWidth/2)+','+(svgHeight + offset*2)+')');
+    xLabel.attr('transform', 'translate('+(svgWidth/2 + offset - xLabel.text().length * 3)+','+(svgHeight + offset*2)+')');
 
     const tootip = svg.selectAll('rect').each(function (d, i, g) {
       return (
