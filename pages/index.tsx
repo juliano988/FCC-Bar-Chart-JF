@@ -2,8 +2,7 @@ import Head from 'next/head'
 import styles from '../styles/App.module.css'
 import * as d3 from "d3";
 import { useEffect, useRef } from 'react';
-import tippy from 'tippy.js';
-import Tippy from '@tippyjs/react';
+import tippy, { followCursor } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
 
 
@@ -16,7 +15,7 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <Graphic data={data} height='75vh' width='75vw' />
+      <Graphic data={data} height='70vh' width='75vw' />
     </div>
   )
 }
@@ -32,7 +31,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
 
     const rectBaseWidth = 5;
     const spaceBetweenRect = 1;
-    const offset = 25;
+    const offset = 50;
 
     const maxY = Math.max(...props.data.data.map(function (val) { return val[1] }))
     const minY = Math.min(...props.data.data.map(function (val) { return val[1] }))
@@ -46,7 +45,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
       .append('svg')
       .attr('width', svgWidth + offset * 2)
       .attr('height', svgHeight + offset * 2)
-      .attr('transform', 'translate(' + -offset + ',0)')
+      .attr('transform', 'translate(' + -offset + ',' + -offset + ')')
 
     svg.selectAll('rect')
       .data(props.data.data)
@@ -54,7 +53,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
       .attr('class', styles.rectClass)
       .attr('width', scaleX(rectBaseWidth))
       .attr('height', (d) => scaleY(d[1]))
-      .style('fill', 'blue')
+      .style('fill', '#3967ff')
       .attr('x', (d, i) => i * scaleX(rectBaseWidth + spaceBetweenRect) + offset)
       .attr('y', (d) => svgHeight - scaleY(d[1]) + offset)
 
@@ -63,9 +62,17 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
       .call(d3.axisBottom(d3.scaleTime().domain([minX, maxX]).range([0, svgWidth])))
       .style('font-size', '1rem')
 
+    const yLabel = svg.append('text')
+      .attr('fill','white')
+      .text('Gross Domestic Product')
+    yLabel.attr('transform', 'translate(' + offset/2 + ',' + (svgHeight/2 + yLabel.text().length * 5) + ') rotate(-90)');
+
     const rightAxis = svg.append('g')
       .attr('transform', 'translate(' + (svgWidth + offset) + ',' + offset + ')')
       .call(d3.axisRight(d3.scaleLinear().domain([minY, maxY]).range([svgHeight, 0])).tickSize(-svgWidth).tickPadding(-svgWidth))
+
+    rightAxis.select('path')
+      .attr('opacity', '0');
 
     rightAxis.selectAll('line')
       .attr('stroke-dasharray', '2,2')
@@ -78,25 +85,31 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
       return (
         // console.log(d)
         tippy(g[i], {
-          allowHTML: true,
-          delay: 0,
           content: ReactDOMServer.renderToStaticMarkup(
-          <div style={{backgroundColor: 'beige' , paddingLeft: '10px', paddingRight: '10px'}}>
-            <p style={{margin: '0px'}}><strong>Value:</strong> ${d[1]} Bilion</p>
-            <p style={{margin: '0px'}}><strong>Date:</strong> {d[0]}</p>
-          </div>
-          )
+            <div style={{ backgroundColor: 'darkred', padding: '3px', borderRadius: '3px' }}>
+              <p style={{ margin: '2px' }}><strong>Value:</strong> ${d[1]} Bilion</p>
+              <p style={{ margin: '2px' }}><strong>Date:</strong> {(d[0] as string).split('-')[0] + '-' + (d[0] as string).split('-')[1].replace(/.+/, function (match) {
+                switch (match) {
+                  case '01': return 'Q1';
+                  case '04': return 'Q2';
+                  case '07': return 'Q3';
+                  case '10': return 'Q4';
+                  default: return '  ';
+                }
+              })}
+              </p>
+            </div>),
+          allowHTML: true,
+          followCursor: true,
+          plugins: [followCursor],
+          placement: 'left-end',
         })
       )
     })
-
-    console.log()
-
   }, [])
 
-  return (
-    <div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />
-  )
+  return (<div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />)
+
 }
 
 export async function getServerSideProps() {
