@@ -2,7 +2,7 @@ import Head from 'next/head'
 import styles from '../styles/App.module.css'
 import * as d3 from "d3";
 import { useEffect, useRef, useState } from 'react';
-import tippy, { followCursor } from 'tippy.js';
+import tippy, { followCursor, Instance, Props } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
 import { GraphicProps } from '../customTypes';
 
@@ -37,10 +37,10 @@ function Graphic(props: GraphicProps): JSX.Element {
     const svgHeight = graphicDivRef.current.clientHeight;
     const svgWidth = graphicDivRef.current.clientWidth;
 
-    const maxY = Math.max(...props.data.map(function (val) { return val[1] }))
-    const minY = Math.min(...props.data.map(function (val) { return val[1] }))
-    const maxX = new Date(props.data[props.data.length - 1][0])
-    const minX = new Date(props.data[0][0])
+    const maxY = Math.max(...props.data.map(function (val) { return val[1] }));
+    const minY = Math.min(...props.data.map(function (val) { return val[1] }));
+    const maxX = new Date(props.data[props.data.length - 1][0]);
+    const minX = new Date(props.data[0][0]);
 
     const scaleX = d3.scaleLinear().domain([0, props.data.length * rectBaseWidth + props.data.length * spaceBetweenRect]).range([0, svgWidth]);
     const scaleY = d3.scaleLinear().domain([0, maxY]).range([0, svgHeight]);
@@ -94,9 +94,10 @@ function Graphic(props: GraphicProps): JSX.Element {
       .text(props.xLabel)
     xLabel.attr('transform', 'translate(' + (svgWidth / 2 + offset - xLabel.text().length * 3) + ',' + (svgHeight + offset * 2) + ')');
 
+    const tippyInstanceArr:Array<Instance<Props>> = []
     const tootip = svg.selectAll('rect').each(function (d, i, g: Array<HTMLElement>) {
       return (
-        tippy(g[i], {
+        tippyInstanceArr.push(tippy(g[i], {
           content: ReactDOMServer.renderToStaticMarkup(
             <div style={{ backgroundColor: 'darkred', padding: '3px', borderRadius: '3px' }}>
               <p style={{ margin: '2px' }}><strong>Value:</strong> ${d[1]} Bilion</p>
@@ -115,16 +116,17 @@ function Graphic(props: GraphicProps): JSX.Element {
           followCursor: true,
           plugins: [followCursor],
           placement: 'left-end',
-        })
+        }))
       )
     })
-  },[forceRender])
+    return () => {tippyInstanceArr.map(function(val){return val.unmount()})}
+  }, [forceRender])
 
-  let callForceRender:NodeJS.Timeout;
+  let callForceRender: NodeJS.Timeout;
   useEffect(function () {
     addEventListener('resize', function () {
       clearTimeout(callForceRender);
-      callForceRender = setTimeout(function(arg){setForceRender(arg)},500,Math.random());
+      callForceRender = setTimeout(function (arg) { setForceRender(arg) }, 100, Math.random());
     })
   })
 
