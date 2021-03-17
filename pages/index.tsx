@@ -4,7 +4,7 @@ import * as d3 from "d3";
 import { useEffect, useRef } from 'react';
 import tippy, { followCursor } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
-import { GraphicProps } from './customTypes';
+import { GraphicProps } from '../customTypes';
 
 
 export default function App({ data }): JSX.Element {
@@ -16,23 +16,24 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <Graphic data={data.data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='70vh' width='75vw' />
+      <h5>More Information: <a href='http://www.bea.gov/national/pdf/nipaguid.pdf' style={{color:'#3967ff'}}>http://www.bea.gov/national/pdf/nipaguid.pdf</a></h5>
+      <Graphic data={data.data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='60vh' width='75vw' />
     </div>
   )
 }
 
-function Graphic(props:GraphicProps): JSX.Element {
+function Graphic(props: GraphicProps): JSX.Element {
 
   const divRef = useRef<HTMLEmbedElement>(null);
+
+  const rectBaseWidth = 5;
+  const spaceBetweenRect = 1;
+  const offset = 50;
 
   useEffect(function () {
 
     const svgHeight = divRef.current.clientHeight;
     const svgWidth = divRef.current.clientWidth;
-
-    const rectBaseWidth = 5;
-    const spaceBetweenRect = 1;
-    const offset = 50;
 
     const maxY = Math.max(...props.data.map(function (val) { return val[1] }))
     const minY = Math.min(...props.data.map(function (val) { return val[1] }))
@@ -64,9 +65,9 @@ function Graphic(props:GraphicProps): JSX.Element {
       .style('font-size', '1rem')
 
     const yLabel = svg.append('text')
-      .attr('fill','white')
+      .attr('fill', 'white')
       .text(props.yLabel)
-    yLabel.attr('transform', 'translate(' + offset/2 + ',' + (svgHeight/2 + offset + yLabel.text().length * 3) + ') rotate(-90)');
+    yLabel.attr('transform', 'translate(' + offset / 2 + ',' + (svgHeight / 2 + offset + yLabel.text().length * 3) + ') rotate(-90)');
 
     const rightAxis = svg.append('g')
       .attr('transform', 'translate(' + (svgWidth + offset) + ',' + offset + ')')
@@ -83,11 +84,11 @@ function Graphic(props:GraphicProps): JSX.Element {
       .style('font-size', '1rem')
 
     const xLabel = svg.append('text')
-      .attr('fill','white')
+      .attr('fill', 'white')
       .text(props.xLabel)
-    xLabel.attr('transform', 'translate('+(svgWidth/2 + offset - xLabel.text().length * 3)+','+(svgHeight + offset*2)+')');
+    xLabel.attr('transform', 'translate(' + (svgWidth / 2 + offset - xLabel.text().length * 3) + ',' + (svgHeight + offset * 2) + ')');
 
-    const tootip = svg.selectAll('rect').each(function (d, i, g) {
+    const tootip = svg.selectAll('rect').each(function (d, i, g:Array<HTMLElement>) {
       return (
         // console.log(d)
         tippy(g[i], {
@@ -114,11 +115,15 @@ function Graphic(props:GraphicProps): JSX.Element {
     })
   }, [])
 
-  return (<div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto'}} />)
+  return (
+    <div style={{padding: offset}}>
+      <div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />
+    </div>
+  )
 
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   // Fetch data from external API
   const res = await fetch('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json')
   const data = await res.json()
