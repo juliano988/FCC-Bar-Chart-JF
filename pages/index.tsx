@@ -15,12 +15,12 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <Graphic data={data} height='70vh' width='75vw' />
+      <Graphic data={data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='70vh' width='75vw' />
     </div>
   )
 }
 
-function Graphic(props: { data: { data: Array<[date: string, value: number]> }, height: string, width: string }): JSX.Element {
+function Graphic(props: { data: { data: Array<[date: string, value: number]> } , xLabel:string , yLabel:string , height: string, width: string }): JSX.Element {
 
   const divRef = useRef<HTMLEmbedElement>(null);
 
@@ -64,7 +64,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
 
     const yLabel = svg.append('text')
       .attr('fill','white')
-      .text('Gross Domestic Product')
+      .text(props.yLabel)
     yLabel.attr('transform', 'translate(' + offset/2 + ',' + (svgHeight/2 + yLabel.text().length * 5) + ') rotate(-90)');
 
     const rightAxis = svg.append('g')
@@ -81,7 +81,12 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
       .attr('y', '-10')
       .style('font-size', '1rem')
 
-    svg.selectAll('rect').each(function (d, i, g) {
+    const xLabel = svg.append('text')
+      .attr('fill','white')
+      .text(props.xLabel)
+    xLabel.attr('transform', 'translate('+(svgWidth/2)+','+(svgHeight + offset*2)+')');
+
+    const tootip = svg.selectAll('rect').each(function (d, i, g) {
       return (
         // console.log(d)
         tippy(g[i], {
@@ -108,7 +113,7 @@ function Graphic(props: { data: { data: Array<[date: string, value: number]> }, 
     })
   }, [])
 
-  return (<div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />)
+  return (<div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto'}} />)
 
 }
 
