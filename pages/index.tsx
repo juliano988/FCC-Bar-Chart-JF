@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import styles from '../styles/App.module.css'
 import * as d3 from "d3";
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import tippy, { followCursor } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
 import { GraphicProps } from '../customTypes';
@@ -16,7 +16,7 @@ export default function App({ data }): JSX.Element {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <h1 id='title'>United States GDP</h1>
-      <h5 style={{margin: '0px'}}>More Information: <a href='http://www.bea.gov/national/pdf/nipaguid.pdf' style={{color:'#3967ff'}}>http://www.bea.gov/national/pdf/nipaguid.pdf</a></h5>
+      <h5 style={{ margin: '0px' }}>More Information: <a href='http://www.bea.gov/national/pdf/nipaguid.pdf' style={{ color: '#3967ff' }}>http://www.bea.gov/national/pdf/nipaguid.pdf</a></h5>
       <Graphic data={data.data} xLabel='Year' yLabel='Gross Domestic Product (Bilions $)' height='60vh' width='75vw' />
     </div>
   )
@@ -24,7 +24,9 @@ export default function App({ data }): JSX.Element {
 
 function Graphic(props: GraphicProps): JSX.Element {
 
-  const divRef = useRef<HTMLEmbedElement>(null);
+  const [forceRender, setForceRender] = useState<number>(0);
+
+  const graphicDivRef = useRef<HTMLEmbedElement>(null);
 
   const rectBaseWidth = 5;
   const spaceBetweenRect = 1;
@@ -32,8 +34,8 @@ function Graphic(props: GraphicProps): JSX.Element {
 
   useEffect(function () {
 
-    const svgHeight = divRef.current.clientHeight;
-    const svgWidth = divRef.current.clientWidth;
+    const svgHeight = graphicDivRef.current.clientHeight;
+    const svgWidth = graphicDivRef.current.clientWidth;
 
     const maxY = Math.max(...props.data.map(function (val) { return val[1] }))
     const minY = Math.min(...props.data.map(function (val) { return val[1] }))
@@ -43,7 +45,11 @@ function Graphic(props: GraphicProps): JSX.Element {
     const scaleX = d3.scaleLinear().domain([0, props.data.length * rectBaseWidth + props.data.length * spaceBetweenRect]).range([0, svgWidth]);
     const scaleY = d3.scaleLinear().domain([0, maxY]).range([0, svgHeight]);
 
-    const svg = d3.select(divRef.current)
+    d3.select(graphicDivRef.current)
+      .selectChild()
+      .remove()
+
+    const svg = d3.select(graphicDivRef.current)
       .append('svg')
       .attr('width', svgWidth + offset * 2)
       .attr('height', svgHeight + offset * 2)
@@ -88,9 +94,8 @@ function Graphic(props: GraphicProps): JSX.Element {
       .text(props.xLabel)
     xLabel.attr('transform', 'translate(' + (svgWidth / 2 + offset - xLabel.text().length * 3) + ',' + (svgHeight + offset * 2) + ')');
 
-    const tootip = svg.selectAll('rect').each(function (d, i, g:Array<HTMLElement>) {
+    const tootip = svg.selectAll('rect').each(function (d, i, g: Array<HTMLElement>) {
       return (
-        // console.log(d)
         tippy(g[i], {
           content: ReactDOMServer.renderToStaticMarkup(
             <div style={{ backgroundColor: 'darkred', padding: '3px', borderRadius: '3px' }}>
@@ -113,14 +118,21 @@ function Graphic(props: GraphicProps): JSX.Element {
         })
       )
     })
-  }, [])
+  },[forceRender])
+
+  let callForceRender:NodeJS.Timeout;
+  useEffect(function () {
+    addEventListener('resize', function () {
+      clearTimeout(callForceRender);
+      callForceRender = setTimeout(function(arg){setForceRender(arg)},500,Math.random());
+    })
+  })
 
   return (
-    <div style={{padding: offset}}>
-      <div ref={divRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />
+    <div style={{ padding: offset }}>
+      <div ref={graphicDivRef} style={{ height: props.height, width: props.width, margin: 'auto' }} />
     </div>
   )
-
 }
 
 export async function getStaticProps() {
