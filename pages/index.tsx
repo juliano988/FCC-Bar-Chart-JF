@@ -45,10 +45,6 @@ function Graphic(props: GraphicProps): JSX.Element {
     const scaleX = d3.scaleLinear().domain([0, props.data.length * rectBaseWidth + props.data.length * spaceBetweenRect]).range([0, svgWidth]);
     const scaleY = d3.scaleLinear().domain([0, maxY]).range([0, svgHeight]);
 
-    d3.select(graphicDivRef.current)
-      .selectChild()
-      .remove()
-
     const svg = d3.select(graphicDivRef.current)
       .append('svg')
       .attr('width', svgWidth + offset * 2)
@@ -68,7 +64,10 @@ function Graphic(props: GraphicProps): JSX.Element {
     const bottomAxis = svg.append('g')
       .attr('transform', 'translate(' + offset + ',' + (svgHeight + offset) + ')')
       .call(d3.axisBottom(d3.scaleTime().domain([minX, maxX]).range([0, svgWidth])))
-      .style('font-size', '1rem')
+      .style('font-size', '1rem');
+    (window.outerWidth <= 800 && bottomAxis.selectAll('text').attr('transform', 'translate(-20,10) rotate(-45)'))
+
+
 
     const yLabel = svg.append('text')
       .attr('fill', 'white')
@@ -94,7 +93,7 @@ function Graphic(props: GraphicProps): JSX.Element {
       .text(props.xLabel)
     xLabel.attr('transform', 'translate(' + (svgWidth / 2 + offset - xLabel.text().length * 3) + ',' + (svgHeight + offset * 2) + ')');
 
-    const tippyInstanceArr:Array<Instance<Props>> = []
+    const tippyInstanceArr: Array<Instance<Props>> = []
     const tootip = svg.selectAll('rect').each(function (d, i, g: Array<HTMLElement>) {
       return (
         tippyInstanceArr.push(tippy(g[i], {
@@ -119,14 +118,19 @@ function Graphic(props: GraphicProps): JSX.Element {
         }))
       )
     })
-    return () => {tippyInstanceArr.map(function(val){return val.unmount()})}
-  }, [forceRender])
+    return () => {
+      d3.select(graphicDivRef.current)
+        .selectChild()
+        .remove()
+      tippyInstanceArr.map(function (val) { return val.unmount() })
+    }
+  }, [forceRender]);
 
   let callForceRender: NodeJS.Timeout;
   useEffect(function () {
     addEventListener('resize', function () {
       clearTimeout(callForceRender);
-      callForceRender = setTimeout(function (arg) { setForceRender(arg) }, 100, Math.random());
+      callForceRender = setTimeout(function (arg) { setForceRender(arg) }, 500, Math.random());
     })
   })
 
