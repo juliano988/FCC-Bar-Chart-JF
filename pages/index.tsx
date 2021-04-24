@@ -1,7 +1,7 @@
 import Head from 'next/head'
 import styles from '../styles/App.module.css'
 import * as d3 from "d3";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import tippy, { followCursor, Instance, Props } from 'tippy.js';
 import ReactDOMServer from 'react-dom/server';
 import { GraphicProps } from '../customTypes';
@@ -32,7 +32,7 @@ function Graphic(props: GraphicProps): JSX.Element {
   const spaceBetweenRect = 1;
   const offset = 50;
 
-  useEffect(function () {
+  useLayoutEffect(function () {
 
     const svgHeight = graphicDivRef.current.clientHeight;
     const svgWidth = graphicDivRef.current.clientWidth;
@@ -93,10 +93,9 @@ function Graphic(props: GraphicProps): JSX.Element {
       .text(props.xLabel)
     xLabel.attr('transform', 'translate(' + (svgWidth / 2 + offset - xLabel.text().length * 3) + ',' + (svgHeight + offset * 2) + ')');
 
-    const tippyInstanceArr: Array<Instance<Props>> = []
     const tootip = svg.selectAll('rect').each(function (d, i, g: Array<HTMLElement>) {
       return (
-        tippyInstanceArr.push(tippy(g[i], {
+        tippy(g[i], {
           content: ReactDOMServer.renderToStaticMarkup(
             <div style={{ backgroundColor: 'darkred', padding: '3px', borderRadius: '3px' }}>
               <p style={{ margin: '2px' }}><strong>Value:</strong> ${d[1]} Bilion</p>
@@ -115,24 +114,19 @@ function Graphic(props: GraphicProps): JSX.Element {
           followCursor: true,
           plugins: [followCursor],
           placement: 'left-end',
-        }))
+        }).unmount()
       )
     })
     return () => {
       d3.select(graphicDivRef.current)
         .selectChild()
         .remove()
-      tippyInstanceArr.map(function (val) { return val.unmount() })
     }
   }, [forceRender]);
 
-  let callForceRender: NodeJS.Timeout;
   useEffect(function () {
-    addEventListener('resize', function () {
-      clearTimeout(callForceRender);
-      callForceRender = setTimeout(function (arg) { setForceRender(arg) }, 500, Math.random());
-    })
-  })
+    window.addEventListener('resize', () => setForceRender(Math.random()))
+  }, [])
 
   return (
     <div style={{ padding: offset }}>
