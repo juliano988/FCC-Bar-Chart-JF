@@ -3,6 +3,7 @@ import styles from '../styles/App.module.css'
 import * as d3 from "d3";
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import tippy, { followCursor, Instance, Props } from 'tippy.js';
+import 'tippy.js/animations/shift-toward-subtle.css';
 import ReactDOMServer from 'react-dom/server';
 import { GraphicProps } from '../customTypes';
 
@@ -112,8 +113,9 @@ function Graphic(props: GraphicProps): JSX.Element {
             </div>),
           allowHTML: true,
           followCursor: true,
-          plugins: [followCursor],
+          animation: 'shift-toward-subtle',
           placement: 'left-end',
+          plugins: [followCursor],
         }).unmount()
       )
     })
